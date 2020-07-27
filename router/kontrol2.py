@@ -21,6 +21,10 @@ class Kontrol2:
         self.inport.close()
         self.outport.close()
 
+    def ledOff(self, led):
+        msgOn = mido.Message('control_change', control=led, value=0)
+        self.outport.send(msgOn)
+
     def ledOn(self, led):
         msgOn = mido.Message('control_change', control=led, value=127)
         self.outport.send(msgOn)
@@ -54,8 +58,10 @@ class Kontrol2:
             # PopperPump Toggle Run
             if self.popperpump.is_program_running():
                 self.popperpump.stop_program()
+                self.ledOff(constant.BUTTON_R_0)
             else:
                 self.popperpump.start_program()
+                self.ledOn(constant.BUTTON_R_0)
         else:
             logging.debug("Pushed button %s" % (button,))
 

@@ -29,20 +29,11 @@ class PopperPump:
 
     def program(self):
         if not self.program_lock.acquire(False):
-            print("popperpump program already running")
+            logging.warning("popperpump program already running")
         else:
-            print("starting popperpump program")
+            logging.info("starting popperpump program")
             try:
                 while True:
-                    self.popperPump.setDutyCycle(1)
-                    try:
-                        msg = self.program_queue.get(timeout=self.run_time)
-                        # Message Received
-                        self.popperPump.setDutyCycle(0)
-                        return
-                    except queue.Empty:
-                        pass
-
                     self.popperPump.setDutyCycle(0)
                     try:
                         msg = self.program_queue.get(timeout=self.sleep_time)
@@ -51,8 +42,17 @@ class PopperPump:
                         return
                     except queue.Empty:
                         pass
+
+                    self.popperPump.setDutyCycle(1)
+                    try:
+                        msg = self.program_queue.get(timeout=self.run_time)
+                        # Message Received
+                        self.popperPump.setDutyCycle(0)
+                        return
+                    except queue.Empty:
+                        pass
             finally:
-                print("popperpump program stopped")
+                logging.info("popperpump program stopped")
                 self.program_lock.release()
 
     def set_run(self, value):
