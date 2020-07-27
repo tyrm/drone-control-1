@@ -52,7 +52,10 @@ class Kontrol2:
     def buttonDown(self, button):
         if button == 'r_0':
             # PopperPump Toggle Run
-            print("meow")
+            if self.popperpump.is_program_running():
+                self.popperpump.stop_program()
+            else:
+                self.popperpump.start_program()
         else:
             logging.debug("Pushed button %s" % (button,))
 
