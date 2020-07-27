@@ -14,11 +14,10 @@ if args.debug:
 else:
     logging.basicConfig(format='%(asctime)-15s %(levelname)-8s %(message)s', level=logging.INFO)
 
-logging.debug('Starting up')
+logging.info('Starting up')
 
 if __name__ == "__main__":
     pump = popperpump.PopperPump()
-
     k2 = kontrol2.Kontrol2(pump)
 
     try:
