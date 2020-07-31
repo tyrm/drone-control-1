@@ -182,7 +182,7 @@ class Kontrol2:
     def slid_slider(self, idx, value):
         if idx == 0:
             self.popperpump.set_run(value)
-        if idx == 5:
+        elif idx == 5:
             self.buttvibe.set_level(value)
         else:
             logging.debug("Slid slider %d to %d" % (idx, value))

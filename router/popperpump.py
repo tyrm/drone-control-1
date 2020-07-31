@@ -2,8 +2,8 @@ import threading, queue
 import logging
 from Phidget22.Devices.DigitalOutput import *
 
-runMin = 15
-runMax = 60
+runMin = 10
+runMax = 30
 sleepMin = 300
 sleepMax = 60
 
