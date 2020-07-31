@@ -44,52 +44,54 @@ KNOBS = [16, 17, 18, 19, 20, 21, 22, 23]
 SLIDERS = [0, 1, 2, 3, 4, 5, 6, 7]
 
 LEDS = {
-    'track_left': 58,
-    'track_right': 59,
-    'cycle': 46,
-    'marker_set': 60,
-    'marker_left': 61,
+    'track_left':   58,
+    'track_right':  59,
+    'cycle':        46,
+    'marker_set':   60,
+    'marker_left':  61,
     'marker_right': 62,
-    'rwd': 43,
-    'fwd': 44,
-    'stop': 42,
-    'play': 41,
-    'record': 45,
-    's_0': 32,
-    's_1': 33,
-    's_2': 34,
-    's_3': 35,
-    's_4': 36,
-    's_5': 37,
-    's_6': 38,
-    's_7': 39,
-    'm_0': 48,
-    'm_1': 49,
-    'm_2': 50,
-    'm_3': 51,
-    'm_4': 52,
-    'm_5': 53,
-    'm_6': 54,
-    'm_7': 55,
-    'r_0': 64,
-    'r_1': 65,
-    'r_2': 66,
-    'r_3': 67,
-    'r_4': 68,
-    'r_5': 69,
-    'r_6': 70,
-    'r_7': 71
+    'rwd':          43,
+    'fwd':          44,
+    'stop':         42,
+    'play':         41,
+    'record':       45,
+    's_0':          32,
+    's_1':          33,
+    's_2':          34,
+    's_3':          35,
+    's_4':          36,
+    's_5':          37,
+    's_6':          38,
+    's_7':          39,
+    'm_0':          48,
+    'm_1':          49,
+    'm_2':          50,
+    'm_3':          51,
+    'm_4':          52,
+    'm_5':          53,
+    'm_6':          54,
+    'm_7':          55,
+    'r_0':          64,
+    'r_1':          65,
+    'r_2':          66,
+    'r_3':          67,
+    'r_4':          68,
+    'r_5':          69,
+    'r_6':          70,
+    'r_7':          71
 }
 
+
 class Kontrol2:
-    def __init__(self, pp):
+    def __init__(self, port, bv, pp):
 
         # Connect to
         logging.debug("Input Ports {}".format(mido.get_input_names()))
-        self.inport = mido.open_input('nanoKONTROL2:nanoKONTROL2 MIDI 1 32:0', callback=self.midi_callback)
+        self.inport = mido.open_input(port, callback=self.midi_callback)
         logging.debug("Output Ports {}".format(mido.get_output_names()))
-        self.outport = mido.open_output('nanoKONTROL2:nanoKONTROL2 MIDI 1 32:0')
+        self.outport = mido.open_output(port)
 
+        self.buttvibe = bv
         self.popperpump = pp
 
     def close(self):
@@ -139,11 +141,37 @@ class Kontrol2:
             else:
                 self.popperpump.start_program()
                 self.led_on('r_0')
+        elif button == 's_5':
+            led_status = self.buttvibe.start_single()
+
+            if led_status:
+                self.led_on('s_5')
+            else:
+                self.led_off('s_5')
+        elif button == 'r_5':
+            # ButtVibe Toggle Run
+            if self.buttvibe.is_program_running():
+                self.buttvibe.stop_program()
+                self.led_off('r_5')
+                self.led_off('s_5')
+            else:
+                self.buttvibe.start_program()
+                self.led_on('r_5')
+                self.led_on('s_5')
+
         else:
             logging.debug("Pushed button %s" % (button,))
 
     def button_up(self, button):
-        logging.debug("Released button %s" % (button,))
+        if button == 's_5':
+            led_status = self.buttvibe.stop_single()
+
+            if led_status:
+                self.led_on('s_5')
+            else:
+                self.led_off('s_5')
+        else:
+            logging.debug("Released button %s" % (button,))
 
     def twisted_knob(self, idx, value):
         if idx == 0:
@@ -154,5 +182,7 @@ class Kontrol2:
     def slid_slider(self, idx, value):
         if idx == 0:
             self.popperpump.set_run(value)
+        if idx == 5:
+            self.buttvibe.set_level(value)
         else:
             logging.debug("Slid slider %d to %d" % (idx, value))

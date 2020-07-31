@@ -9,10 +9,11 @@ sleepMax = 60
 
 
 class PopperPump:
-    def __init__(self):
+    def __init__(self, serial):
         logging.debug("Opening Phidget")
         self.popperPump = DigitalOutput()
         self.popperPump.setChannel(0)
+        self.popperPump.setDeviceSerialNumber(serial)
         self.popperPump.openWaitForAttachment(5000)
 
         self.program_lock = threading.Lock()

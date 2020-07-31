@@ -1,12 +1,19 @@
-import kontrol2  # local
-import popperpump  # local
 import logging
 import time
 from argparse import ArgumentParser
 
+import serial
+
+import buttvibe
+import kontrol2
+import popperpump
+
 # Init Stuff
 parser = ArgumentParser()
 parser.add_argument('-d', '--debug', action='store_true', help='Enable debug output')
+parser.add_argument('-e', '--esp32', default='/dev/tytyUSB0', help='ESP32 serial')
+parser.add_argument('-k', '--kontrol', default='nanoKONTROL2:nanoKONTROL2 MIDI 1 32:0', help='MIDI port name')
+parser.add_argument('-p', '--phidget', default=520822, type=int, help='Phidget serial')
 args = parser.parse_args()
 
 if args.debug:
@@ -17,8 +24,13 @@ else:
 logging.info('Starting up')
 
 if __name__ == "__main__":
-    pump = popperpump.PopperPump()
-    k2 = kontrol2.Kontrol2(pump)
+    esp32 = serial.Serial('/dev/ttyUSB0')  # open serial port
+    logging.debug("opened serial port {}".format(esp32.name))
+
+    butt = buttvibe.ButtVibe()
+    pump = popperpump.PopperPump(args.phidget)
+
+    k2 = kontrol2.Kontrol2(args.kontrol, butt, pump)
 
     try:
         while True:
