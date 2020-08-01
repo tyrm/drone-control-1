@@ -107,8 +107,23 @@ class Kontrol2:
         self.outport.send(msgOn)
 
     # Kontrol Object functions
-    def k_led_on(self, led, channel):
+    def k_led_on(self, channel, led):
         msgOn = mido.Message('control_change', value=127)
+
+        if led == 's':
+            msgOn.control = LEDS['s_0'] + channel
+        elif led == 'm':
+            msgOn.control = LEDS['m_0'] + channel
+        elif led == 'r':
+            msgOn.control = LEDS['r_0'] + channel
+        else:
+            logging.error(f'Got invalid led [{led}] on channel {channel}')
+            return
+
+        self.outport.send(msgOn)
+
+    def k_led_off(self, channel, led):
+        msgOn = mido.Message('control_change', value=0)
 
         if led == 's':
             msgOn.control = LEDS['s_0'] + channel
@@ -182,34 +197,16 @@ class Kontrol2:
 
 
 class GenericKontrol:
-    def __init__(self):
-        self.slider = 0
-        self.knob = 0
-
-        self.running = False
-
     def k_button_down(self, channel, button, k: Kontrol2):
+        k.k_led_on(channel, button)
         logging.debug(f'Pushed button {button}_{channel}')
 
-        if button == 'r':
-            if self.running:
-                self.running = False
-            else:
-                self.running = True
-
     def k_button_up(self, channel, button, k: Kontrol2):
+        k.k_led_off(channel, button)
         logging.debug(f'Released button {button}_{channel}')
-
-        if button == 'r':
-            if self.running:
-                self.running = False
-            else:
-                self.running = True
 
     def k_knob(self, channel, level, k: Kontrol2):
         logging.debug(f'Twisted knob {channel} to {level}')
-        self.knob = level
 
     def k_slider(self, channel, level, k: Kontrol2):
         logging.debug(f'Slid slider {channel} to {level}')
-        self.slider = level
