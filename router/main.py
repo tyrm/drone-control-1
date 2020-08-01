@@ -25,13 +25,13 @@ if __name__ == "__main__":
     toycomms = toycomms.ToyComms()
     k2 = Kontrol2(args.kontrol)
 
-    buttvibe = ButtVibe()
-    k2.attach(0, buttvibe)
+    k2.attach(0, GenericKontrol())
     k2.attach(1, GenericKontrol())
     k2.attach(2, GenericKontrol())
     k2.attach(3, GenericKontrol())
     k2.attach(4, GenericKontrol())
-    k2.attach(5, GenericKontrol())
+    buttvibe = ButtVibe()
+    k2.attach(5, buttvibe)
     k2.attach(6, GenericKontrol())
     k2.attach(7, GenericKontrol())
 

@@ -11,9 +11,11 @@ class ButtVibe:
         self.running = False
         self.level = 0
 
+        # Required for Kontroller
         self.kontrol = None
         self.channel = None
 
+        # Buttplug Client
         self.bp_client = ButtplugClient("Drone Control 1")
         self.bp_connector = ButtplugClientWebsocketConnector("ws://127.0.0.1:12345")
 
@@ -25,12 +27,11 @@ class ButtVibe:
         return self.running
 
     def set_level(self, level):
-        float_level = util.scale(level, (0, 127), (0, 1))
-        logging.debug("Setting butt vibration level to: {}".format(round(float_level, 2)))
-        self.level = float_level
+        logging.debug("Setting butt vibration level to: {}".format(round(level, 2)))
+        self.level = level
 
         if self.running:
-            self._send_level(float_level)
+            self._send_level(level)
 
     def start_vibe(self):
         logging.debug("starting butt vibration")
@@ -42,12 +43,12 @@ class ButtVibe:
             # send vibe
             logging.debug("starting single butt vibration")
             self._send_level(self.level)
-            return True
+            self.kontrol.k_led_on(self.channel, 's')
         else:
             # mute
             logging.debug("starting single butt mute")
             self._send_level(0)
-            return False
+            self.kontrol.k_led_off(self.channel, 's')
 
     def stop_vibe(self):
         logging.debug("stopping butt vibration")
@@ -59,12 +60,12 @@ class ButtVibe:
             # stop vibe
             logging.debug("stopping single butt vibration")
             self._send_level(0)
-            return False
+            self.kontrol.k_led_off(self.channel, 's')
         else:
             # unmute
             logging.debug("stopping single butt mute")
             self._send_level(self.level)
-            return True
+            self.kontrol.k_led_on(self.channel, 's')
 
     # Private Functions
     def _send_level(self, level):
@@ -80,21 +81,31 @@ class ButtVibe:
         if self.kontrol is None:
             self.kontrol = k
             self.channel = channel
-            logging.debug(f'Buttvibe on channel {channel}')
+            logging.debug(f'Buttvibe attached on channel {channel}')
         else:
             raise KontrolAlreadyAttachedError(f'Cannot attach to channel {channel} already attached to {self.channel}')
 
-    def k_button_down(self, button, ):
+    def k_button_down(self, button):
         if self.kontrol is not None:
-            self.kontrol.k_led_on(self.channel, button)
-            logging.debug(f'Pushed button {button}_{self.channel}')
+            if button == 'r':
+                if self.is_running():
+                    self.stop_vibe()
+                    self.kontrol.k_led_off(self.channel, 's')
+                    self.kontrol.k_led_off(self.channel, 'r')
+                else:
+                    self.start_vibe()
+                    self.kontrol.k_led_on(self.channel, 's')
+                    self.kontrol.k_led_on(self.channel, 'r')
+            if button == 's':
+                self.start_single()
+
         else:
             raise KontrolNotAttachedError(f'Buttvibe not attached to Kontroller')
 
     def k_button_up(self, button):
         if self.kontrol is not None:
-            self.kontrol.k_led_off(self.channel, button)
-            logging.debug(f'Released button {button}_{self.channel}')
+            if button == 's':
+                self.stop_single()
         else:
             raise KontrolNotAttachedError(f'Buttvibe not attached to Kontroller')
 
@@ -106,6 +117,7 @@ class ButtVibe:
 
     def k_slider(self, level):
         if self.kontrol is not None:
-            logging.debug(f'Slid slider {self.channel} to {level}')
+            float_level = util.scale(level, (0, 127), (0, 1))
+            self.set_level(float_level)
         else:
             raise KontrolNotAttachedError(f'Buttvibe not attached to Kontroller')
