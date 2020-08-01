@@ -84,15 +84,13 @@ LEDS = {
 
 class Kontrol2:
     def __init__(self, port):
-
         # Connect to
         logging.debug(f'Input Ports {mido.get_input_names()}')
         self.inport = mido.open_input(port, callback=self._midi_callback)
         logging.debug(f'Output Ports {mido.get_output_names()}')
         self.outport = mido.open_output(port)
 
-        self.control_objects = [GenericKontrol(), GenericKontrol(), GenericKontrol(), GenericKontrol(),
-                                GenericKontrol(), GenericKontrol(), GenericKontrol(), GenericKontrol()]
+        self.control_objects = [None, None, None, None, None, None, None, None]
 
     def close(self):
         self.inport.close()
@@ -165,48 +163,44 @@ class Kontrol2:
         if 32 <= button <= 39:
             # s button
             channel = button - 32
-            self.control_objects[channel].k_button_down(channel, 's', self)
+            if self.control_objects[channel] is not None:
+                self.control_objects[channel].k_button_down('s')
         if 48 <= button <= 55:
             # m button
             channel = button - 48
-            self.control_objects[channel].k_button_down(channel, 'm', self)
+            if self.control_objects[channel] is not None:
+                self.control_objects[channel].k_button_down('m')
         if 64 <= button <= 71:
             # r button
             channel = button - 64
-            self.control_objects[channel].k_button_down(channel, 'r', self)
+            if self.control_objects[channel] is not None:
+                self.control_objects[channel].k_button_down('r')
 
     def _button_up(self, button):
         if 32 <= button <= 39:
             # s button
             channel = button - 32
-            self.control_objects[channel].k_button_up(channel, 's', self)
+            if self.control_objects[channel] is not None:
+                self.control_objects[channel].k_button_up('s')
         if 48 <= button <= 55:
             # m button
             channel = button - 48
-            self.control_objects[channel].k_button_up(channel, 'm', self)
+            if self.control_objects[channel] is not None:
+                self.control_objects[channel].k_button_up('m')
         if 64 <= button <= 71:
             # r button
             channel = button - 64
-            self.control_objects[channel].k_button_up(channel, 'r', self)
+            if self.control_objects[channel] is not None:
+                self.control_objects[channel].k_button_up('r')
 
     def _twisted_knob(self, idx, value):
-        self.control_objects[idx].k_knob(idx, value, self)
+        if self.control_objects[idx] is not None:
+            self.control_objects[idx].k_knob(value)
 
     def _slid_slider(self, idx, value):
-        self.control_objects[idx].k_slider(idx, value, self)
+        if self.control_objects[idx] is not None:
+            self.control_objects[idx].k_slider(value)
 
-
-class GenericKontrol:
-    def k_button_down(self, channel, button, k: Kontrol2):
-        k.k_led_on(channel, button)
-        logging.debug(f'Pushed button {button}_{channel}')
-
-    def k_button_up(self, channel, button, k: Kontrol2):
-        k.k_led_off(channel, button)
-        logging.debug(f'Released button {button}_{channel}')
-
-    def k_knob(self, channel, level, k: Kontrol2):
-        logging.debug(f'Twisted knob {channel} to {level}')
-
-    def k_slider(self, channel, level, k: Kontrol2):
-        logging.debug(f'Slid slider {channel} to {level}')
+    def attach(self, channel, kontrol_object):
+        self.control_objects[channel] = kontrol_object
+        self.control_objects[channel].k_attach(channel, self)

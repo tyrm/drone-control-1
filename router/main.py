@@ -2,13 +2,9 @@ import logging
 import time
 from argparse import ArgumentParser
 
-import serial
-
 import toycomms
-import buttvibe
-from kontrol2 import Kontrol2
-import popperpump
-import nipplevibe
+from buttvibe import ButtVibe
+from kontrol2 import Kontrol2, GenericKontrol
 
 # Init Stuff
 parser = ArgumentParser()
@@ -26,10 +22,18 @@ else:
 logging.info('Starting up')
 
 if __name__ == "__main__":
-
     toycomms = toycomms.ToyComms()
-
     k2 = Kontrol2(args.kontrol)
+
+    buttvibe = ButtVibe()
+    k2.attach(0, buttvibe)
+    k2.attach(1, GenericKontrol())
+    k2.attach(2, GenericKontrol())
+    k2.attach(3, GenericKontrol())
+    k2.attach(4, GenericKontrol())
+    k2.attach(5, GenericKontrol())
+    k2.attach(6, GenericKontrol())
+    k2.attach(7, GenericKontrol())
 
     try:
         while True:
