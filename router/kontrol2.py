@@ -83,20 +83,18 @@ LEDS = {
 
 
 class Kontrol2:
-    def __init__(self, port, bv, pp):
+    def __init__(self, port):
 
         # Connect to
-        logging.debug("Input Ports {}".format(mido.get_input_names()))
-        self.inport = mido.open_input(port, callback=self.midi_callback)
-        logging.debug("Output Ports {}".format(mido.get_output_names()))
+        logging.debug(f'Input Ports {mido.get_input_names()}')
+        self.inport = mido.open_input(port, callback=self._midi_callback)
+        logging.debug(f'Output Ports {mido.get_output_names()}')
         self.outport = mido.open_output(port)
 
-        self.buttvibe = bv
-        self.popperpump = pp
+        self.control_objects = [GenericKontrol(), GenericKontrol(), GenericKontrol(), GenericKontrol(),
+                                GenericKontrol(), GenericKontrol(), GenericKontrol(), GenericKontrol()]
 
     def close(self):
-        self.popperpump.close()
-
         self.inport.close()
         self.outport.close()
 
@@ -108,81 +106,110 @@ class Kontrol2:
         msgOn = mido.Message('control_change', control=LEDS[led], value=127)
         self.outport.send(msgOn)
 
-    def midi_callback(self, message):
+    # Kontrol Object functions
+    def k_led_on(self, led, channel):
+        msgOn = mido.Message('control_change', value=127)
+
+        if led == 's':
+            msgOn.control = LEDS['s_0'] + channel
+        elif led == 'm':
+            msgOn.control = LEDS['m_0'] + channel
+        elif led == 'r':
+            msgOn.control = LEDS['r_0'] + channel
+        else:
+            logging.error(f'Got invalid led [{led}] on channel {channel}')
+            return
+
+        self.outport.send(msgOn)
+
+    # Privates
+    def _midi_callback(self, message):
         control = message.control
         value = message.value
         if (control in BUTTONS):
-            name = BUTTONS[control]
             if (value == 127):
-                return self.button_down(name)
+                return self._button_down(control)
             else:
-                return self.button_up(name)
+                return self._button_up(control)
         else:
             try:
                 idx = KNOBS.index(control)
-                return self.twisted_knob(idx, value)
+                return self._twisted_knob(idx, value)
             except ValueError:
                 pass
             try:
                 idx = SLIDERS.index(control)
-                return self.slid_slider(idx, value)
+                return self._slid_slider(idx, value)
             except ValueError:
                 pass
 
             print("Control: %d, Value: %d" % (control, value))
         print(message)
 
-    def button_down(self, button):
-        if button == 'r_0':
-            # PopperPump Toggle Run
-            if self.popperpump.is_program_running():
-                self.popperpump.stop_program()
-                self.led_off('r_0')
+    def _button_down(self, button):
+        if 32 <= button <= 39:
+            # s button
+            channel = button - 32
+            self.control_objects[channel].k_button_down(channel, 's', self)
+        if 48 <= button <= 55:
+            # m button
+            channel = button - 48
+            self.control_objects[channel].k_button_down(channel, 'm', self)
+        if 64 <= button <= 71:
+            # r button
+            channel = button - 64
+            self.control_objects[channel].k_button_down(channel, 'r', self)
+
+    def _button_up(self, button):
+        if 32 <= button <= 39:
+            # s button
+            channel = button - 32
+            self.control_objects[channel].k_button_up(channel, 's', self)
+        if 48 <= button <= 55:
+            # m button
+            channel = button - 48
+            self.control_objects[channel].k_button_up(channel, 'm', self)
+        if 64 <= button <= 71:
+            # r button
+            channel = button - 64
+            self.control_objects[channel].k_button_up(channel, 'r', self)
+
+    def _twisted_knob(self, idx, value):
+        self.control_objects[idx].k_knob(idx, value, self)
+
+    def _slid_slider(self, idx, value):
+        self.control_objects[idx].k_slider(idx, value, self)
+
+
+class GenericKontrol:
+    def __init__(self):
+        self.slider = 0
+        self.knob = 0
+
+        self.running = False
+
+    def k_button_down(self, channel, button, k: Kontrol2):
+        logging.debug(f'Pushed button {button}_{channel}')
+
+        if button == 'r':
+            if self.running:
+                self.running = False
             else:
-                self.popperpump.start_program()
-                self.led_on('r_0')
-        elif button == 's_5':
-            led_status = self.buttvibe.start_single()
+                self.running = True
 
-            if led_status:
-                self.led_on('s_5')
+    def k_button_up(self, channel, button, k: Kontrol2):
+        logging.debug(f'Released button {button}_{channel}')
+
+        if button == 'r':
+            if self.running:
+                self.running = False
             else:
-                self.led_off('s_5')
-        elif button == 'r_5':
-            # ButtVibe Toggle Run
-            if self.buttvibe.is_program_running():
-                self.buttvibe.stop_program()
-                self.led_off('r_5')
-                self.led_off('s_5')
-            else:
-                self.buttvibe.start_program()
-                self.led_on('r_5')
-                self.led_on('s_5')
+                self.running = True
 
-        else:
-            logging.debug("Pushed button %s" % (button,))
+    def k_knob(self, channel, level, k: Kontrol2):
+        logging.debug(f'Twisted knob {channel} to {level}')
+        self.knob = level
 
-    def button_up(self, button):
-        if button == 's_5':
-            led_status = self.buttvibe.stop_single()
-
-            if led_status:
-                self.led_on('s_5')
-            else:
-                self.led_off('s_5')
-        else:
-            logging.debug("Released button %s" % (button,))
-
-    def twisted_knob(self, idx, value):
-        if idx == 0:
-            self.popperpump.set_sleep(value)
-        else:
-            logging.debug("Twisted knob %d to %d" % (idx, value))
-
-    def slid_slider(self, idx, value):
-        if idx == 0:
-            self.popperpump.set_run(value)
-        elif idx == 5:
-            self.buttvibe.set_level(value)
-        else:
-            logging.debug("Slid slider %d to %d" % (idx, value))
+    def k_slider(self, channel, level, k: Kontrol2):
+        logging.debug(f'Slid slider {channel} to {level}')
+        self.slider = level

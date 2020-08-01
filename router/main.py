@@ -4,9 +4,11 @@ from argparse import ArgumentParser
 
 import serial
 
+import toycomms
 import buttvibe
-import kontrol2
+from kontrol2 import Kontrol2
 import popperpump
+import nipplevibe
 
 # Init Stuff
 parser = ArgumentParser()
@@ -24,13 +26,10 @@ else:
 logging.info('Starting up')
 
 if __name__ == "__main__":
-    esp32 = serial.Serial('/dev/ttyUSB0')  # open serial port
-    logging.debug("opened serial port {}".format(esp32.name))
 
-    butt = buttvibe.ButtVibe()
-    pump = popperpump.PopperPump(args.phidget)
+    toycomms = toycomms.ToyComms()
 
-    k2 = kontrol2.Kontrol2(args.kontrol, butt, pump)
+    k2 = Kontrol2(args.kontrol)
 
     try:
         while True:
