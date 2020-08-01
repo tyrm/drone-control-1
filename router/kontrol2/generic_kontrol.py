@@ -14,30 +14,30 @@ class GenericKontrol:
             self.channel = channel
             logging.debug(f'Attached on channel {channel}')
         else:
-            raise KontrolAlreadyAttachedError(f'Cannot attach to channel {channel} already attached to {self.channel}')
+            raise KontrolAlreadyAttachedError(f'cannot attach to channel {channel} already attached to {self.channel}')
 
     def k_button_down(self, button, ):
         if self.kontrol is not None:
             self.kontrol.k_led_on(self.channel, button)
             logging.debug(f'Pushed button {button}_{self.channel}')
         else:
-            raise KontrolNotAttachedError(f'Not attached to Kontroller')
+            raise KontrolNotAttachedError(f'not attached to Kontroller')
 
     def k_button_up(self, button):
         if self.kontrol is not None:
             self.kontrol.k_led_off(self.channel, button)
             logging.debug(f'Released button {button}_{self.channel}')
         else:
-            raise KontrolNotAttachedError(f'Not attached to Kontroller')
+            raise KontrolNotAttachedError(f'not attached to Kontroller')
 
     def k_knob(self, level):
         if self.kontrol is not None:
             logging.debug(f'Twisted knob {self.channel} to {level}')
         else:
-            raise KontrolNotAttachedError(f'Not attached to Kontroller')
+            raise KontrolNotAttachedError(f'not attached to Kontroller')
 
     def k_slider(self, level):
         if self.kontrol is not None:
             logging.debug(f'Slid slider {self.channel} to {level}')
         else:
-            raise KontrolNotAttachedError(f'Not attached to Kontroller')
+            raise KontrolNotAttachedError(f'not attached to Kontroller')
