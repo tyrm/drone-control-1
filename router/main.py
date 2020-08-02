@@ -2,10 +2,11 @@ import logging
 import time
 from argparse import ArgumentParser
 
-import toycomms
+import dcesp
 from buttvibe import ButtVibe
 from kontrol2 import Kontrol2, GenericKontrol
 from popperpump import PopperPump
+from nipplevibe import NippleVibe
 
 # Init Stuff
 parser = ArgumentParser()
@@ -23,14 +24,17 @@ else:
 logging.info('Starting up')
 
 if __name__ == "__main__":
-    toycomms = toycomms.ToyComms()
+    esp = dcesp.DcEsp()
     k2 = Kontrol2(args.kontrol)
 
     popperpump = PopperPump(args.phidget)
     k2.attach(0, popperpump)
 
-    k2.attach(1, GenericKontrol())
-    k2.attach(2, GenericKontrol())
+    nipple0 = NippleVibe(esp, 0)
+    nipple1 = NippleVibe(esp, 1)
+    k2.attach(1, nipple0)
+    k2.attach(2, nipple1)
+
     k2.attach(3, GenericKontrol())
     k2.attach(4, GenericKontrol())
 

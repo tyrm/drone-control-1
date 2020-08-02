@@ -92,6 +92,12 @@ class Kontrol2:
 
         self.control_objects = [None, None, None, None, None, None, None, None]
 
+        # Turn off all LEDS
+        for led in LEDS.items():
+            msgOn = mido.Message('control_change', control=led[1], value=0)
+            self.outport.send(msgOn)
+            print(led[1])
+
     def close(self):
         self.inport.close()
         self.outport.close()
