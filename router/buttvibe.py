@@ -80,7 +80,8 @@ class ButtVibe:
 
     def _device_added(self, emitter, dev: ButtplugClientDevice):
         logging.debug(f'Buttvibe device added: {dev}')
-        asyncio.create_task(self._device_added_task(dev))
+        self.bp_device = dev
+        asyncio.create_task(self._device_added_task(self.bp_device))
 
     async def _device_added_task(self, dev: ButtplugClientDevice):
         if "VibrateCmd" in dev.allowed_messages.keys():
@@ -88,8 +89,9 @@ class ButtVibe:
             await asyncio.sleep(1)
             await dev.send_stop_device_cmd()
 
-    def _device_removed(emitter, dev: ButtplugClientDevice):
+    def _device_removed(self, emitter, dev: ButtplugClientDevice):
         logging.debug(f'Buttvibe device removed: {dev}')
+        self.bp_device = None
 
     async def _init_buttplug_client(self):
         self.bp_client.device_added_handler += self._device_added
@@ -103,6 +105,8 @@ class ButtVibe:
 
 
         await self.bp_client.start_scanning()
+
+        self.bp_loop = asyncio.get_event_loop()
 
         task = asyncio.create_task(self._cancel_me())
         try:
@@ -120,11 +124,11 @@ class ButtVibe:
 
     def _send_level(self, level):
         if level > 0:
-            logging.error("I want to send a vibration level command to your buttplug.")
-            # TODO send level command to buttplug
+            logging.debug(f'Sending level {level} to ButtVibe')
+            asyncio.run_coroutine_threadsafe(self.bp_device.send_vibrate_cmd(level), self.bp_loop)
         else:
-            logging.error("I want to send the stop command to your buttplug.")
-            # TODO send level command to
+            logging.debug(f'Sending stop to ButtVibe')
+            asyncio.run_coroutine_threadsafe(self.bp_device.send_stop_device_cmd(), self.bp_loop)
 
     # Kontrol Functions
     def k_attach(self, channel, k: Kontrol2):
@@ -167,7 +171,7 @@ class ButtVibe:
 
     def k_slider(self, level):
         if self.kontrol is not None:
-            float_level = util.scale(level, (0, 127), (0, 1))
+            float_level = round(util.scale(level, (0, 127), (0, 1)), 2)
             self.set_level(float_level)
         else:
             raise KontrolNotAttachedError(f'Buttvibe not attached to Kontroller')
