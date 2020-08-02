@@ -1,7 +1,9 @@
 import logging
+import asyncio
+import threading
 
-from buttplug.client import (ButtplugClient, ButtplugClientWebsocketConnector)
-
+from buttplug.client import (ButtplugClientWebsocketConnector, ButtplugClient,
+                             ButtplugClientDevice, ButtplugClientConnectorError)
 import util
 from kontrol2 import Kontrol2, KontrolAlreadyAttachedError, KontrolNotAttachedError
 
@@ -18,8 +20,9 @@ class ButtVibe:
         # Buttplug Client
         self.bp_client = ButtplugClient("Drone Control 1")
         self.bp_connector = ButtplugClientWebsocketConnector("ws://127.0.0.1:12345")
+        self.bp_device = None
 
-        # TODO init some stuff
+        threading.Thread(target=self._init_buttplug_client_thread, daemon=True).start()
 
         logging.debug("Buttvibe Started")
 
@@ -68,6 +71,53 @@ class ButtVibe:
             self.kontrol.k_led_on(self.channel, 's')
 
     # Private Functions
+    async def _cancel_me(self):
+        try:
+            while True:
+                await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            pass
+
+    def _device_added(self, emitter, dev: ButtplugClientDevice):
+        logging.debug(f'Buttvibe device added: {dev}')
+        asyncio.create_task(self._device_added_task(dev))
+
+    async def _device_added_task(self, dev: ButtplugClientDevice):
+        if "VibrateCmd" in dev.allowed_messages.keys():
+            await dev.send_vibrate_cmd(0.5)
+            await asyncio.sleep(1)
+            await dev.send_stop_device_cmd()
+
+    def _device_removed(emitter, dev: ButtplugClientDevice):
+        logging.debug(f'Buttvibe device removed: {dev}')
+
+    async def _init_buttplug_client(self):
+        self.bp_client.device_added_handler += self._device_added
+        self.bp_client.device_removed_handler += self._device_removed
+
+        try:
+            await self.bp_client.connect(self.bp_connector)
+        except ButtplugClientConnectorError as e:
+            print("Could not connect to server, exiting: {}".format(e.message))
+            return
+
+
+        await self.bp_client.start_scanning()
+
+        task = asyncio.create_task(self._cancel_me())
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+        await self.bp_client.stop_scanning()
+
+        await self.bp_client.disconnect()
+        print("Disconnected, quitting")
+
+    def _init_buttplug_client_thread(self):
+        asyncio.run(self._init_buttplug_client(), debug=True)
+
     def _send_level(self, level):
         if level > 0:
             logging.error("I want to send a vibration level command to your buttplug.")
