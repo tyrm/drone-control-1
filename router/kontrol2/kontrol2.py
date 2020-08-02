@@ -96,7 +96,6 @@ class Kontrol2:
         for led in LEDS.items():
             msgOn = mido.Message('control_change', control=led[1], value=0)
             self.outport.send(msgOn)
-            print(led[1])
 
     def close(self):
         self.inport.close()
