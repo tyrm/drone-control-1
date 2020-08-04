@@ -12,6 +12,7 @@ class ButtVibe:
     def __init__(self):
         self.running = False
         self.level = 0
+        self.last_sent_level = 0
 
         # Required for Kontroller
         self.kontrol = None
@@ -125,10 +126,14 @@ class ButtVibe:
     def _send_level(self, level):
         if level > 0:
             logging.debug(f'Sending level {level} to ButtVibe')
-            asyncio.run_coroutine_threadsafe(self.bp_device.send_vibrate_cmd(level), self.bp_loop)
+            if level != self.last_sent_level:
+                asyncio.run_coroutine_threadsafe(self.bp_device.send_vibrate_cmd(level), self.bp_loop)
+                self.last_sent_level = level
         else:
             logging.debug(f'Sending stop to ButtVibe')
-            asyncio.run_coroutine_threadsafe(self.bp_device.send_stop_device_cmd(), self.bp_loop)
+            if level != self.last_sent_level:
+                asyncio.run_coroutine_threadsafe(self.bp_device.send_stop_device_cmd(), self.bp_loop)
+                self.last_sent_level = level
 
     # Kontrol Functions
     def k_attach(self, channel, k: Kontrol2):
@@ -171,7 +176,7 @@ class ButtVibe:
 
     def k_slider(self, level):
         if self.kontrol is not None:
-            float_level = round(util.scale(level, (0, 127), (0, 1)), 2)
+            float_level = round(util.scale(level, (0, 127), (0, 1)), 1)
             self.set_level(float_level)
         else:
             raise KontrolNotAttachedError(f'Buttvibe not attached to Kontroller')

@@ -11,7 +11,7 @@ from nipplevibe import NippleVibe
 # Init Stuff
 parser = ArgumentParser()
 parser.add_argument('-d', '--debug', action='store_true', help='Enable debug output')
-parser.add_argument('-e', '--esp32', default='/dev/tytyUSB0', help='ESP32 serial')
+parser.add_argument('-e', '--esp32', default='/dev/ttyUSB0', help='ESP32 serial')
 parser.add_argument('-k', '--kontrol', default='nanoKONTROL2:nanoKONTROL2 MIDI 1 32:0', help='MIDI port name')
 parser.add_argument('-p', '--phidget', default=520822, type=int, help='Phidget serial')
 args = parser.parse_args()
@@ -24,7 +24,7 @@ else:
 logging.info('Starting up')
 
 if __name__ == "__main__":
-    esp = dcesp.DcEsp()
+    esp = dcesp.DcEsp(args.esp32)
     k2 = Kontrol2(args.kontrol)
 
     popperpump = PopperPump(args.phidget)

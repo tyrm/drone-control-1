@@ -96,8 +96,8 @@ class PopperPump:
             raise KontrolAlreadyAttachedError(f'cannot attach to channel {channel} already attached to {self.channel}')
 
     def k_button_down(self, button, ):
-        if button == 'r':
-            if self.kontrol is not None:
+        if self.kontrol is not None:
+            if button == 'r':
                 if self.program_is_running():
                     self.stop_program()
                     self.kontrol.k_led_off(self.channel, 'r')

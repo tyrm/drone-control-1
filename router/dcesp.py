@@ -6,7 +6,7 @@ import util
 
 
 class DcEsp:
-    def __init__(self, serial_port='/dev/ttyUSB1'):
+    def __init__(self, serial_port):
         logging.debug("Opening ToyComms")
 
         self.send_lock = threading.Lock()
