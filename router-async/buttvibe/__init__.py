@@ -22,17 +22,53 @@ class ButtVibe:
         asyncio.get_event_loop().run_until_complete(self._init_buttplug_client())
 
     async def close(self):
+        """
+        close connection to intiface
+        """
         await self.bp_client.stop_scanning()
         await self.bp_client.disconnect()
         print('buttvibe disconnected, quitting')
 
     async def handle_command(self, command):
         if command['action'] == 'vibe':
-            logging.debug(f'buttvibe sending level {command["level"]}')
             await self.set_vibe(command['level'])
+        elif command['action'] == 'vibefor':
+            await self.vibe_for(command['time'],command['level'])
 
     async def set_vibe(self, level):
+        """
+        send vibration level to buttplug
+
+        :param level: vibration level to send to buttplug
+        :type level: float
+        """
+        if 1 >= level > 0:
+            logging.info(f'buttvibe sending level {level}')
+            await self.bp_device.send_vibrate_cmd(level)
+        else:
+            await self.stop_vibe()
+
+    async def stop_vibe(self):
+        """
+        send stop command to buttplug
+        """
+        logging.info(f'buttvibe sending stop')
+        await self.bp_device.send_stop_device_cmd()
+
+    async def vibe_for(self, ms, level):
+        """
+        vibrate buttplug for a certain number of milliseconds
+        
+        :param ms: milliseconds to wait
+        :type level: int
+        :param level: vibration level to send to buttplug
+        :type level: float
+        """
         await self.bp_device.send_vibrate_cmd(level)
+        print("done")
+
+        seconds = ms / 1000
+        asyncio.get_event_loop().call_later(seconds, self.stop_vibe)
 
     # Private Functions
     def _device_added(self, emitter, dev: ButtplugClientDevice):
@@ -60,3 +96,8 @@ class ButtVibe:
 
         logging.debug("buttvibe starting scan")
         await self.bp_client.start_scanning()
+
+    async def _off_after(self, milliseconds):
+        seconds = milliseconds / 1000
+        await asyncio.sleep(seconds)
+        await self.stop_vibe()
