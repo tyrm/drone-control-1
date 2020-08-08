@@ -26,6 +26,14 @@ class ButtVibe:
         await self.bp_client.disconnect()
         print('buttvibe disconnected, quitting')
 
+    async def handle_command(self, command):
+        if command['action'] == 'vibe':
+            logging.debug(f'buttvibe sending level {command["level"]}')
+            await self.set_vibe(command['level'])
+
+    async def set_vibe(self, level):
+        await self.bp_device.send_vibrate_cmd(level)
+
     # Private Functions
     def _device_added(self, emitter, dev: ButtplugClientDevice):
         logging.debug(f'buttvibe device added: {dev}')

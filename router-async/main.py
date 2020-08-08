@@ -3,8 +3,9 @@
 import asyncio
 import json
 import logging
-import websockets
 from argparse import ArgumentParser
+
+import websockets
 
 from buttvibe import ButtVibe
 
@@ -33,7 +34,6 @@ async def unregister(websocket):
 
 
 async def hander(websocket, path):
-    # register(websocket) sends user_event() to websocket
     await register(websocket)
     try:
         async for message in websocket:
@@ -43,7 +43,11 @@ async def hander(websocket, path):
             except json.decoder.JSONDecodeError:
                 pass
 
-            print(data[0])
+            for command in data:
+                print(command)
+                if command["device"] == "butt":
+                    await buttvibe.handle_command(command)
+
     except websockets.exceptions.ConnectionClosedError:
         logging.warning('client unexpectedly closed the connection')
     finally:
