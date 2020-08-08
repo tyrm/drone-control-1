@@ -58,7 +58,7 @@ class ButtVibe:
     async def vibe_for(self, ms, level):
         """
         vibrate buttplug for a certain number of milliseconds
-        
+
         :param ms: milliseconds to wait
         :type level: int
         :param level: vibration level to send to buttplug
