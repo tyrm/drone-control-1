@@ -67,8 +67,7 @@ class ButtVibe:
         await self.bp_device.send_vibrate_cmd(level)
         print("done")
 
-        seconds = ms / 1000
-        asyncio.get_event_loop().call_later(seconds, self.stop_vibe)
+        asyncio.get_event_loop().create_task(self._off_after(ms))
 
     # Private Functions
     def _device_added(self, emitter, dev: ButtplugClientDevice):
@@ -78,9 +77,9 @@ class ButtVibe:
 
     async def _device_added_task(self, dev: ButtplugClientDevice):
         if "VibrateCmd" in dev.allowed_messages.keys():
-            await dev.send_vibrate_cmd(0.5)
+            await self.bp_device.send_vibrate_cmd(0.5)
             await asyncio.sleep(1)
-            await dev.send_stop_device_cmd()
+            await self.bp_device.send_stop_device_cmd()
 
     def _device_removed(self, emitter, dev: ButtplugClientDevice):
         logging.debug(f'buttvibe device removed: {dev}')
