@@ -31,7 +31,7 @@ logging.debug('starting')
 esp = DcEsp(args.esp32)
 
 # init buttvibe
-buttvibe = [ButtVibe()]
+buttvibe = ButtVibe()
 
 # init nipplevibes
 nipplevibe = [NippleVibe(esp, 0), NippleVibe(esp, 1)]
@@ -57,18 +57,18 @@ async def hander(websocket, path):
                 pass
 
             for command in data:
-                print(command)
-
-                index = 0
-                try:
-                    index = command["index"]
-                except KeyError:
-                    pass
-
                 if command["device"] == "butt":
-                    await buttvibe[index].handle_command(command)
+                    await buttvibe.handle_command(command)
                 elif command["device"] == "nipple":
+                    index = 0
+                    try:
+                        index = command["index"]
+                    except KeyError:
+                        pass
+
                     await nipplevibe[index].handle_command(command)
+                elif command["device"] == "popper":
+                    pass
 
     except websockets.exceptions.ConnectionClosedError:
         logging.warning('client unexpectedly closed the connection')

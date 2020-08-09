@@ -65,8 +65,6 @@ class ButtVibe:
         :type level: float
         """
         await self.bp_device.send_vibrate_cmd(level)
-        print("done")
-
         asyncio.get_event_loop().create_task(self._off_after(ms))
 
     # Private Functions
